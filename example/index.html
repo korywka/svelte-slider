@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Svelte Slider</title>
+  <script src="../dist/index.js"></script>
+  <style>
+    :root {
+      --sliderPrimary: #FF9800;
+      --sliderSecondary: rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body>
+<div id="slider"></div>
+<script>
+  new Slider({
+    target: document.getElementById('slider'),
+    props: {
+      onChange: (v) => console.log(v),
+    },
+  });
+</script>
+</body>
+</html>
