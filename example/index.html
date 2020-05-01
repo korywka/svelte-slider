@@ -12,13 +12,30 @@
   </style>
 </head>
 <body>
-<div id="slider"></div>
+<h2>Single Slider</h2>
+<div id="slider-single"></div>
+<h2>Range Slider</h2>
+<div id="slider-range"></div>
 <script>
-  new Slider({
-    target: document.getElementById('slider'),
+  const singleSlider = new Slider({
+    target: document.getElementById('slider-single'),
     props: {
-      onChange: (v) => console.log(v),
+      value: [0, 0.5],
+      single: true,
     },
+  });
+  singleSlider.$on('change', (event) => {
+    console.log(event.detail);
+  });
+
+  const rangeSlider = new Slider({
+    target: document.getElementById('slider-range'),
+    props: {
+      value: [0.2, 0.8],
+    },
+  });
+  rangeSlider.$on('change', (event) => {
+    console.log(event.detail);
   });
 </script>
 </body>

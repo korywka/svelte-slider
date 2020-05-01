@@ -6,7 +6,7 @@
 
   let thumb;
   let bbox;
-  const events = pointerEvents();
+  let events = pointerEvents();
   const dispatch = createEventDispatcher();
 
   function handleStart(event) {
@@ -16,7 +16,6 @@
     dispatch('dragstart', { x, bbox });
     window.addEventListener(events.move, handleMove);
     window.addEventListener(events.end, handleEnd);
-    document.body.style.cursor = 'pointer';
   }
 
   function handleMove(event) {
@@ -33,7 +32,6 @@
     dispatch('dragend', { x, bbox });
     window.removeEventListener(events.move, handleMove);
     window.removeEventListener(events.end, handleEnd);
-    document.body.style.cursor = '';
   }
 
   onMount(() => {

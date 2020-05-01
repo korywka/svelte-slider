@@ -3,8 +3,8 @@
   import Rail from './Rail.svelte';
   import Thumb from './Thumb.svelte';
 
-  export let value = [0.4, 0.7];
-  export let onChange;
+  export let value = [0, 1];
+  export let single = false;
 
   let container;
   let activeIndex;
@@ -16,6 +16,7 @@
       activeIndex = index;
       const { bbox } = event.detail;
       offset = bbox.width / 2 - (event.detail.x - bbox.left);
+      document.body.style.cursor = 'pointer';
     }
   }
 
@@ -43,22 +44,33 @@
     if (value[activeIndex] === position) return;
     value[activeIndex] = position;
     dispatch('change', value);
-    if (onChange) onChange(value);
+  }
+
+  function endListener() {
+    document.body.style.cursor = '';
+  }
+
+  function onSet(event) {
+    console.log(event.detail);
   }
 </script>
 
 <div class="slider">
   <div bind:this={container}>
-    <Rail {value}>
-      <Thumb
-        position={value[0]}
-        on:dragstart={getStartListener(0)}
-        on:dragging={moveListener}
-      />
+    <Rail {value} on:set={onSet}>
+      {#if !single}
+        <Thumb
+          position={value[0]}
+          on:dragstart={getStartListener(0)}
+          on:dragging={moveListener}
+          on:dragend={endListener}
+        />
+      {/if}
       <Thumb
         position={value[1]}
         on:dragstart={getStartListener(1)}
         on:dragging={moveListener}
+        on:dragend={endListener}
       />
     </Rail>
   </div>
