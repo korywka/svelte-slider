@@ -9,9 +9,16 @@
   let events = pointerEvents();
   const dispatch = createEventDispatcher();
 
+  function getX(event) {
+    if (event.touches) {
+      return event.touches[0].clientX;
+    }
+    return event.clientX;
+  }
+
   function handleStart(event) {
     event.preventDefault();
-    const x = event.clientX;
+    const x = getX(event);
     const bbox = event.target.getBoundingClientRect();
     dispatch('dragstart', { x, bbox });
     window.addEventListener(events.move, handleMove);
@@ -20,16 +27,14 @@
 
   function handleMove(event) {
     event.preventDefault();
-    const x = event.clientX;
+    const x = getX(event);
     const bbox = event.target.getBoundingClientRect();
     dispatch('dragging', { x, bbox });
   }
 
   function handleEnd(event) {
     event.preventDefault();
-    const x = event.clientX;
-    const bbox = event.target.getBoundingClientRect();
-    dispatch('dragend', { x, bbox });
+    dispatch('dragend');
     window.removeEventListener(events.move, handleMove);
     window.removeEventListener(events.end, handleEnd);
   }
@@ -58,6 +63,7 @@
     top: 50%;
     border-radius: 50%;
     background: var(--sliderPrimary);
+    touch-action: none;
     transform: translate(-50%, -50%);
     transition: .2s height, .2s width;
   }

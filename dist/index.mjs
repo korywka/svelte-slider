@@ -452,8 +452,8 @@ function toPercent(n) {
 
 function add_css$1() {
 	var style = element("style");
-	style.id = "svelte-1j9m69z-style";
-	style.textContent = ".thumb.svelte-1j9m69z{width:16px;height:16px;position:absolute;left:0;top:50%;border-radius:50%;background:var(--sliderPrimary);transform:translate(-50%, -50%);transition:.2s height, .2s width}.thumb.svelte-1j9m69z:after{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;transform:translate(-50%, -50%);cursor:pointer}.thumb.svelte-1j9m69z:before{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;border-radius:50%;opacity:0.3;background:var(--sliderSecondary);transform:translate(-50%, -50%) scale(0);transition:.2s all}";
+	style.id = "svelte-1p2qw86-style";
+	style.textContent = ".thumb.svelte-1p2qw86{width:16px;height:16px;position:absolute;left:0;top:50%;border-radius:50%;background:var(--sliderPrimary);touch-action:none;transform:translate(-50%, -50%);transition:.2s height, .2s width}.thumb.svelte-1p2qw86:after{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;transform:translate(-50%, -50%);cursor:pointer}.thumb.svelte-1p2qw86:before{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;border-radius:50%;opacity:0.3;background:var(--sliderSecondary);transform:translate(-50%, -50%) scale(0);transition:.2s all}";
 	append(document.head, style);
 }
 
@@ -464,7 +464,7 @@ function create_fragment$1(ctx) {
 	return {
 		c() {
 			div = element("div");
-			attr(div, "class", "thumb svelte-1j9m69z");
+			attr(div, "class", "thumb svelte-1p2qw86");
 			set_style(div, "left", toPercent(/*position*/ ctx[0]) + "%");
 		},
 		m(target, anchor, remount) {
@@ -493,6 +493,14 @@ function create_fragment$1(ctx) {
 	};
 }
 
+function getX(event) {
+	if (event.touches) {
+		return event.touches[0].clientX;
+	}
+
+	return event.clientX;
+}
+
 function instance$1($$self, $$props, $$invalidate) {
 	let { position } = $$props;
 	let thumb;
@@ -502,7 +510,7 @@ function instance$1($$self, $$props, $$invalidate) {
 
 	function handleStart(event) {
 		event.preventDefault();
-		const x = event.clientX;
+		const x = getX(event);
 		const bbox = event.target.getBoundingClientRect();
 		dispatch("dragstart", { x, bbox });
 		window.addEventListener(events.move, handleMove);
@@ -511,16 +519,14 @@ function instance$1($$self, $$props, $$invalidate) {
 
 	function handleMove(event) {
 		event.preventDefault();
-		const x = event.clientX;
+		const x = getX(event);
 		const bbox = event.target.getBoundingClientRect();
 		dispatch("dragging", { x, bbox });
 	}
 
 	function handleEnd(event) {
 		event.preventDefault();
-		const x = event.clientX;
-		const bbox = event.target.getBoundingClientRect();
-		dispatch("dragend", { x, bbox });
+		dispatch("dragend");
 		window.removeEventListener(events.move, handleMove);
 		window.removeEventListener(events.end, handleEnd);
 	}
@@ -555,7 +561,7 @@ function instance$1($$self, $$props, $$invalidate) {
 class Thumb extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-1j9m69z-style")) add_css$1();
+		if (!document.getElementById("svelte-1p2qw86-style")) add_css$1();
 		init(this, options, instance$1, create_fragment$1, safe_not_equal, { position: 0 });
 	}
 }
