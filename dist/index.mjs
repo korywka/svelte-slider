@@ -430,6 +430,13 @@ class Rail extends SvelteComponent {
 }
 
 function pointerEvents() {
+  if (document && 'ontouchstart' in document.documentElement) {
+    return {
+      start: 'touchstart',
+      move: 'touchmove',
+      end: 'touchend',
+    };
+  }
   return {
     start: 'mousedown',
     move: 'mousemove',
