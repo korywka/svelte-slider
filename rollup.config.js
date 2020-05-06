@@ -11,15 +11,15 @@ export default {
   input: 'src/index.js',
   output: [
     {
-    	file: pkg.module,
-			format: 'es',
-		},
+      file: pkg.module,
+      format: 'es',
+    },
     {
-    	file: pkg.main,
-			format: 'umd',
-			name,
-			sourcemap: true,
-		}
+      file: pkg.main,
+      format: 'umd',
+      name,
+      sourcemap: true,
+    }
   ],
   plugins: [
     svelte(),
