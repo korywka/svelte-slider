@@ -22,5 +22,8 @@
   "files": [
     "src",
     "dist"
-  ]
+  ],
+  "homepage": "https://bravecow.github.io/svelte-slider/",
+  "repository": "bravecow/svelte-slider",
+  "license": "MIT"
 }
