@@ -1,53 +1,45 @@
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
-  import { pointerEvents, toPercent } from './helpers';
 
   export let position;
 
   let thumb;
   let bbox;
-  let events = pointerEvents();
   const dispatch = createEventDispatcher();
-
-  function getX(event) {
-    if (event.touches) {
-      return event.touches[0].clientX;
-    }
-    return event.clientX;
-  }
 
   function handleStart(event) {
     event.preventDefault();
-    const x = getX(event);
+    const x = event.clientX;
     const bbox = event.target.getBoundingClientRect();
+    thumb.setPointerCapture(event.pointerId);
+    thumb.addEventListener('pointermove', handleMove);
+    thumb.addEventListener('pointerup', handleEnd);
     dispatch('dragstart', { x, bbox });
-    window.addEventListener(events.move, handleMove);
-    window.addEventListener(events.end, handleEnd);
   }
 
   function handleMove(event) {
     event.preventDefault();
-    const x = getX(event);
+    const x = event.clientX;
     const bbox = event.target.getBoundingClientRect();
     dispatch('dragging', { x, bbox });
   }
 
   function handleEnd(event) {
     event.preventDefault();
+    thumb.removeEventListener('pointermove', handleMove);
+    thumb.removeEventListener('pointerup', handleEnd);
     dispatch('dragend');
-    window.removeEventListener(events.move, handleMove);
-    window.removeEventListener(events.end, handleEnd);
   }
 
   onMount(() => {
-    thumb.addEventListener(events.start, handleStart);
+    thumb.addEventListener('pointerdown', handleStart);
   });
 </script>
 
 <div
   bind:this={thumb}
   class="thumb"
-  style="left: {toPercent(position)}%;"
+  style="left: {position * 100}%;"
   on:start={handleStart}
   on:move={handleMove}
   on:end={handleEnd}

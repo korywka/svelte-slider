@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
-    (global = global || self, global.Slider = factory());
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Slider = factory());
 }(this, (function () { 'use strict';
 
     function noop() { }
@@ -25,6 +25,9 @@
     }
     function safe_not_equal(a, b) {
         return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+    }
+    function is_empty(obj) {
+        return Object.keys(obj).length === 0;
     }
     function create_slot(definition, ctx, $$scope, fn) {
         if (definition) {
@@ -54,6 +57,13 @@
             return $$scope.dirty | lets;
         }
         return $$scope.dirty;
+    }
+    function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+        const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+        if (slot_changes) {
+            const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+            slot.p(slot_context, slot_changes);
+        }
     }
 
     function append(target, node) {
@@ -102,7 +112,7 @@
     }
     function get_current_component() {
         if (!current_component)
-            throw new Error(`Function called outside component initialization`);
+            throw new Error('Function called outside component initialization');
         return current_component;
     }
     function onMount(fn) {
@@ -152,6 +162,7 @@
                 set_current_component(component);
                 update(component.$$);
             }
+            set_current_component(null);
             dirty_components.length = 0;
             while (binding_callbacks.length)
                 binding_callbacks.pop()();
@@ -222,31 +233,27 @@
             block.o(local);
         }
     }
-
-    const globals = (typeof window !== 'undefined'
-        ? window
-        : typeof globalThis !== 'undefined'
-            ? globalThis
-            : global);
     function create_component(block) {
         block && block.c();
     }
-    function mount_component(component, target, anchor) {
+    function mount_component(component, target, anchor, customElement) {
         const { fragment, on_mount, on_destroy, after_update } = component.$$;
         fragment && fragment.m(target, anchor);
-        // onMount happens before the initial afterUpdate
-        add_render_callback(() => {
-            const new_on_destroy = on_mount.map(run).filter(is_function);
-            if (on_destroy) {
-                on_destroy.push(...new_on_destroy);
-            }
-            else {
-                // Edge case - component was destroyed immediately,
-                // most likely as a result of a binding initialising
-                run_all(new_on_destroy);
-            }
-            component.$$.on_mount = [];
-        });
+        if (!customElement) {
+            // onMount happens before the initial afterUpdate
+            add_render_callback(() => {
+                const new_on_destroy = on_mount.map(run).filter(is_function);
+                if (on_destroy) {
+                    on_destroy.push(...new_on_destroy);
+                }
+                else {
+                    // Edge case - component was destroyed immediately,
+                    // most likely as a result of a binding initialising
+                    run_all(new_on_destroy);
+                }
+                component.$$.on_mount = [];
+            });
+        }
         after_update.forEach(add_render_callback);
     }
     function destroy_component(component, detaching) {
@@ -271,7 +278,6 @@
     function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
         const parent_component = current_component;
         set_current_component(component);
-        const prop_values = options.props || {};
         const $$ = component.$$ = {
             fragment: null,
             ctx: null,
@@ -283,19 +289,21 @@
             // lifecycle
             on_mount: [],
             on_destroy: [],
+            on_disconnect: [],
             before_update: [],
             after_update: [],
             context: new Map(parent_component ? parent_component.$$.context : []),
             // everything else
             callbacks: blank_object(),
-            dirty
+            dirty,
+            skip_bound: false
         };
         let ready = false;
         $$.ctx = instance
-            ? instance(component, prop_values, (i, ret, ...rest) => {
+            ? instance(component, options.props || {}, (i, ret, ...rest) => {
                 const value = rest.length ? rest[0] : ret;
                 if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-                    if ($$.bound[i])
+                    if (!$$.skip_bound && $$.bound[i])
                         $$.bound[i](value);
                     if (ready)
                         make_dirty(component, i);
@@ -321,11 +329,14 @@
             }
             if (options.intro)
                 transition_in(component.$$.fragment);
-            mount_component(component, options.target, options.anchor);
+            mount_component(component, options.target, options.anchor, options.customElement);
             flush();
         }
         set_current_component(parent_component);
     }
+    /**
+     * Base class for Svelte components. Used when dev=false.
+     */
     class SvelteComponent {
         $destroy() {
             destroy_component(this, 1);
@@ -340,26 +351,23 @@
                     callbacks.splice(index, 1);
             };
         }
-        $set() {
-            // overridden by instance, if it has props
+        $set($$props) {
+            if (this.$$set && !is_empty($$props)) {
+                this.$$.skip_bound = true;
+                this.$$set($$props);
+                this.$$.skip_bound = false;
+            }
         }
     }
 
-    /* src/Rail.svelte generated by Svelte v3.21.0 */
+    /* src/Rail.svelte generated by Svelte v3.35.0 */
 
-    function add_css() {
-    	var style = element("style");
-    	style.id = "svelte-1u5xdj2-style";
-    	style.textContent = ".rail.svelte-1u5xdj2{position:relative;height:2px;background:var(--sliderSecondary)}.selected.svelte-1u5xdj2{position:absolute;left:0;right:0;top:0;bottom:0;background:var(--sliderPrimary)}";
-    	append(document.head, style);
-    }
-
-    function create_fragment(ctx) {
+    function create_fragment$2(ctx) {
     	let div1;
     	let div0;
     	let t;
     	let current;
-    	const default_slot_template = /*$$slots*/ ctx[2].default;
+    	const default_slot_template = /*#slots*/ ctx[2].default;
     	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[1], null);
 
     	return {
@@ -395,7 +403,7 @@
 
     			if (default_slot) {
     				if (default_slot.p && dirty & /*$$scope*/ 2) {
-    					default_slot.p(get_slot_context(default_slot_template, ctx, /*$$scope*/ ctx[1], null), get_slot_changes(default_slot_template, /*$$scope*/ ctx[1], dirty, null));
+    					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[1], dirty, null, null);
     				}
     			}
     		},
@@ -415,178 +423,128 @@
     	};
     }
 
-    function instance($$self, $$props, $$invalidate) {
+    function instance$2($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
     	let { value } = $$props;
-    	let { $$slots = {}, $$scope } = $$props;
 
-    	$$self.$set = $$props => {
+    	$$self.$$set = $$props => {
     		if ("value" in $$props) $$invalidate(0, value = $$props.value);
     		if ("$$scope" in $$props) $$invalidate(1, $$scope = $$props.$$scope);
     	};
 
-    	return [value, $$scope, $$slots];
+    	return [value, $$scope, slots];
     }
 
     class Rail extends SvelteComponent {
     	constructor(options) {
     		super();
-    		if (!document.getElementById("svelte-1u5xdj2-style")) add_css();
-    		init(this, options, instance, create_fragment, safe_not_equal, { value: 0 });
+    		init(this, options, instance$2, create_fragment$2, safe_not_equal, { value: 0 });
     	}
     }
 
-    function pointerEvents() {
-      if (document && 'ontouchstart' in document.documentElement) {
-        return {
-          start: 'touchstart',
-          move: 'touchmove',
-          end: 'touchend',
-        };
-      }
-      return {
-        start: 'mousedown',
-        move: 'mousemove',
-        end: 'mouseup',
-      };
-    }
-
-    function toPercent(n) {
-      return n * 100;
-    }
-
-    /* src/Thumb.svelte generated by Svelte v3.21.0 */
-
-    function add_css$1() {
-    	var style = element("style");
-    	style.id = "svelte-1p2qw86-style";
-    	style.textContent = ".thumb.svelte-1p2qw86{width:16px;height:16px;position:absolute;left:0;top:50%;border-radius:50%;background:var(--sliderPrimary);touch-action:none;transform:translate(-50%, -50%);transition:.2s height, .2s width}.thumb.svelte-1p2qw86:after{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;transform:translate(-50%, -50%);cursor:pointer}.thumb.svelte-1p2qw86:before{content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;border-radius:50%;opacity:0.3;background:var(--sliderSecondary);transform:translate(-50%, -50%) scale(0);transition:.2s all}";
-    	append(document.head, style);
-    }
+    /* src/Thumb.svelte generated by Svelte v3.35.0 */
 
     function create_fragment$1(ctx) {
     	let div;
+    	let mounted;
     	let dispose;
 
     	return {
     		c() {
     			div = element("div");
     			attr(div, "class", "thumb svelte-1p2qw86");
-    			set_style(div, "left", toPercent(/*position*/ ctx[0]) + "%");
+    			set_style(div, "left", /*position*/ ctx[0] * 100 + "%");
     		},
-    		m(target, anchor, remount) {
+    		m(target, anchor) {
     			insert(target, div, anchor);
-    			/*div_binding*/ ctx[8](div);
-    			if (remount) run_all(dispose);
+    			/*div_binding*/ ctx[5](div);
 
-    			dispose = [
-    				listen(div, "start", /*handleStart*/ ctx[2]),
-    				listen(div, "move", /*handleMove*/ ctx[3]),
-    				listen(div, "end", /*handleEnd*/ ctx[4])
-    			];
+    			if (!mounted) {
+    				dispose = [
+    					listen(div, "start", /*handleStart*/ ctx[2]),
+    					listen(div, "move", /*handleMove*/ ctx[3]),
+    					listen(div, "end", /*handleEnd*/ ctx[4])
+    				];
+
+    				mounted = true;
+    			}
     		},
     		p(ctx, [dirty]) {
     			if (dirty & /*position*/ 1) {
-    				set_style(div, "left", toPercent(/*position*/ ctx[0]) + "%");
+    				set_style(div, "left", /*position*/ ctx[0] * 100 + "%");
     			}
     		},
     		i: noop,
     		o: noop,
     		d(detaching) {
     			if (detaching) detach(div);
-    			/*div_binding*/ ctx[8](null);
+    			/*div_binding*/ ctx[5](null);
+    			mounted = false;
     			run_all(dispose);
     		}
     	};
     }
 
-    function getX(event) {
-    	if (event.touches) {
-    		return event.touches[0].clientX;
-    	}
-
-    	return event.clientX;
-    }
-
     function instance$1($$self, $$props, $$invalidate) {
     	let { position } = $$props;
     	let thumb;
-    	let bbox;
-    	let events = pointerEvents();
     	const dispatch = createEventDispatcher();
 
     	function handleStart(event) {
     		event.preventDefault();
-    		const x = getX(event);
+    		const x = event.clientX;
     		const bbox = event.target.getBoundingClientRect();
+    		thumb.setPointerCapture(event.pointerId);
+    		thumb.addEventListener("pointermove", handleMove);
+    		thumb.addEventListener("pointerup", handleEnd);
     		dispatch("dragstart", { x, bbox });
-    		window.addEventListener(events.move, handleMove);
-    		window.addEventListener(events.end, handleEnd);
     	}
 
     	function handleMove(event) {
     		event.preventDefault();
-    		const x = getX(event);
+    		const x = event.clientX;
     		const bbox = event.target.getBoundingClientRect();
     		dispatch("dragging", { x, bbox });
     	}
 
     	function handleEnd(event) {
     		event.preventDefault();
+    		thumb.removeEventListener("pointermove", handleMove);
+    		thumb.removeEventListener("pointerup", handleEnd);
     		dispatch("dragend");
-    		window.removeEventListener(events.move, handleMove);
-    		window.removeEventListener(events.end, handleEnd);
     	}
 
     	onMount(() => {
-    		thumb.addEventListener(events.start, handleStart);
+    		thumb.addEventListener("pointerdown", handleStart);
     	});
 
     	function div_binding($$value) {
     		binding_callbacks[$$value ? "unshift" : "push"](() => {
-    			$$invalidate(1, thumb = $$value);
+    			thumb = $$value;
+    			$$invalidate(1, thumb);
     		});
     	}
 
-    	$$self.$set = $$props => {
+    	$$self.$$set = $$props => {
     		if ("position" in $$props) $$invalidate(0, position = $$props.position);
     	};
 
-    	return [
-    		position,
-    		thumb,
-    		handleStart,
-    		handleMove,
-    		handleEnd,
-    		bbox,
-    		events,
-    		dispatch,
-    		div_binding
-    	];
+    	return [position, thumb, handleStart, handleMove, handleEnd, div_binding];
     }
 
     class Thumb extends SvelteComponent {
     	constructor(options) {
     		super();
-    		if (!document.getElementById("svelte-1p2qw86-style")) add_css$1();
     		init(this, options, instance$1, create_fragment$1, safe_not_equal, { position: 0 });
     	}
     }
 
-    /* src/Slider.svelte generated by Svelte v3.21.0 */
+    /* src/Slider.svelte generated by Svelte v3.35.0 */
 
-    const { document: document_1 } = globals;
-
-    function add_css$2() {
-    	var style = element("style");
-    	style.id = "svelte-1cw3o64-style";
-    	style.textContent = ".slider.svelte-1cw3o64{padding:8px}";
-    	append(document_1.head, style);
-    }
-
-    // (61:6) {#if !single}
     function create_if_block(ctx) {
+    	let thumb;
     	let current;
-    	const thumb = new Thumb({ props: { position: /*value*/ ctx[0][0] } });
+    	thumb = new Thumb({ props: { position: /*value*/ ctx[0][0] } });
     	thumb.$on("dragstart", /*getStartListener*/ ctx[3](0));
     	thumb.$on("dragging", /*moveListener*/ ctx[4]);
     	thumb.$on("dragend", endListener);
@@ -622,9 +580,10 @@
     // (60:4) <Rail {value} on:set={onSet}>
     function create_default_slot(ctx) {
     	let t;
+    	let thumb;
     	let current;
     	let if_block = !/*single*/ ctx[1] && create_if_block(ctx);
-    	const thumb = new Thumb({ props: { position: /*value*/ ctx[0][1] } });
+    	thumb = new Thumb({ props: { position: /*value*/ ctx[0][1] } });
     	thumb.$on("dragstart", /*getStartListener*/ ctx[3](1));
     	thumb.$on("dragging", /*moveListener*/ ctx[4]);
     	thumb.$on("dragend", endListener);
@@ -688,12 +647,13 @@
     	};
     }
 
-    function create_fragment$2(ctx) {
+    function create_fragment(ctx) {
     	let div1;
     	let div0;
+    	let rail;
     	let current;
 
-    	const rail = new Rail({
+    	rail = new Rail({
     			props: {
     				value: /*value*/ ctx[0],
     				$$slots: { default: [create_default_slot] },
@@ -714,7 +674,7 @@
     			insert(target, div1, anchor);
     			append(div1, div0);
     			mount_component(rail, div0, null);
-    			/*div0_binding*/ ctx[8](div0);
+    			/*div0_binding*/ ctx[5](div0);
     			current = true;
     		},
     		p(ctx, [dirty]) {
@@ -739,7 +699,7 @@
     		d(detaching) {
     			if (detaching) detach(div1);
     			destroy_component(rail);
-    			/*div0_binding*/ ctx[8](null);
+    			/*div0_binding*/ ctx[5](null);
     		}
     	};
     }
@@ -752,7 +712,7 @@
     	console.log(event.detail);
     }
 
-    function instance$2($$self, $$props, $$invalidate) {
+    function instance($$self, $$props, $$invalidate) {
     	let { value = [0, 1] } = $$props;
     	let { single = false } = $$props;
     	let container;
@@ -797,33 +757,23 @@
 
     	function div0_binding($$value) {
     		binding_callbacks[$$value ? "unshift" : "push"](() => {
-    			$$invalidate(2, container = $$value);
+    			container = $$value;
+    			$$invalidate(2, container);
     		});
     	}
 
-    	$$self.$set = $$props => {
+    	$$self.$$set = $$props => {
     		if ("value" in $$props) $$invalidate(0, value = $$props.value);
     		if ("single" in $$props) $$invalidate(1, single = $$props.single);
     	};
 
-    	return [
-    		value,
-    		single,
-    		container,
-    		getStartListener,
-    		moveListener,
-    		activeIndex,
-    		offset,
-    		dispatch,
-    		div0_binding
-    	];
+    	return [value, single, container, getStartListener, moveListener, div0_binding];
     }
 
     class Slider extends SvelteComponent {
     	constructor(options) {
     		super();
-    		if (!document_1.getElementById("svelte-1cw3o64-style")) add_css$2();
-    		init(this, options, instance$2, create_fragment$2, safe_not_equal, { value: 0, single: 1 });
+    		init(this, options, instance, create_fragment, safe_not_equal, { value: 0, single: 1 });
     	}
     }
 
