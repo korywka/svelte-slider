@@ -23,7 +23,7 @@
     "src",
     "dist"
   ],
-  "homepage": "https://bravecow.github.io/svelte-slider/",
-  "repository": "bravecow/svelte-slider",
+  "homepage": "https://korywka.github.io/svelte-slider/",
+  "repository": "korywka/svelte-slider",
   "license": "MIT"
 }
